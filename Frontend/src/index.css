@@ -1,0 +1,9 @@
+/**
+ * index.css
+ *
+ * Punto de entrada de estilos globales.
+ * La directiva @import "tailwindcss" es todo lo que necesita Tailwind v4:
+ * inyecta los estilos base (reset), los componentes y las utilidades.
+ * No necesitamos @tailwind base/components/utilities como en v3.
+ */
+@import "tailwindcss";

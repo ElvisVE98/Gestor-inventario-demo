@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    // Target: ES2020 es suficiente para Node.js moderno, sin overhead innecesario
+    "target": "ES2020",
+    "module": "commonjs",
+    "lib": ["ES2020"],
+
+    // Directorio de salida para los archivos compilados
+    "outDir": "./dist",
+    "rootDir": "./src",
+
+    // Strict: activamos TypeScript estricto para evitar bugs silenciosos
+    "strict": true,
+
+    // esModuleInterop: permite importar módulos CommonJS como si fueran ES modules
+    // (ej: import express from 'express' en vez de import * as express)
+    "esModuleInterop": true,
+
+    // skipLibCheck: evita revisar los tipos de node_modules, acelera la compilación
+    "skipLibCheck": true,
+
+    // forceConsistentCasingInFileNames: evita bugs en sistemas case-insensitive (Windows)
+    "forceConsistentCasingInFileNames": true,
+
+    // resolveJsonModule: permite importar archivos .json directamente
+    "resolveJsonModule": true
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
+}

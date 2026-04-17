@@ -189,7 +189,7 @@ export default function PersonasPage() {
   const hayFiltros = !!(busqueda || filtroSucursal || filtroCentroCosto || verInactivos)
 
   return (
-    <div className="p-8 max-w-7xl">
+    <div className="p-8 max-w-full">
 
       {/* ── Encabezado ──────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between mb-6">

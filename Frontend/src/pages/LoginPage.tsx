@@ -110,7 +110,7 @@ export default function LoginPage() {
       {/* Blob 1 — gran círculo azul, arriba-izquierda */}
       <div aria-hidden="true"
            className="absolute -top-20 -left-24 w-[420px] h-[420px]
-                      rounded-full bg-blue-600/25 blur-[80px]
+                      rounded-full bg-pink-600/25 blur-[80px]
                       pointer-events-none animate-blob-slow" />
 
       {/* Blob 2 — gran círculo índigo, abajo-derecha */}

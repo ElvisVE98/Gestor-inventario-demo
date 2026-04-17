@@ -1,9 +1,32 @@
 /**
  * index.css
  *
- * Punto de entrada de estilos globales.
- * La directiva @import "tailwindcss" es todo lo que necesita Tailwind v4:
- * inyecta los estilos base (reset), los componentes y las utilidades.
- * No necesitamos @tailwind base/components/utilities como en v3.
+ * Estilos globales + configuración de tema para Tailwind CSS v4.
+ * En v4 NO existe tailwind.config.js — el tema se extiende aquí con @theme.
+ * Los @keyframes se declaran como CSS estándar fuera del bloque @theme.
  */
 @import "tailwindcss";
+
+/* ── Animaciones personalizadas para los blobs del fondo ───────────────────── */
+
+/**
+ * Keyframe "blob": mueve y escala ligeramente el elemento
+ * para crear el efecto de forma orgánica y viva.
+ */
+@keyframes blob {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33%       { transform: translate(30px, -20px) scale(1.1); }
+  66%       { transform: translate(-20px, 15px) scale(0.95); }
+}
+
+/**
+ * @theme registra las animaciones como utilidades Tailwind.
+ * Genera las clases: animate-blob-slow, animate-blob-medium,
+ * animate-blob-fast y animate-blob-xslow.
+ */
+@theme {
+  --animate-blob-slow:   blob 8s  ease-in-out infinite;
+  --animate-blob-medium: blob 10s ease-in-out infinite 2s;
+  --animate-blob-fast:   blob 7s  ease-in-out infinite 4s;
+  --animate-blob-xslow:  blob 12s ease-in-out infinite 1s;
+}

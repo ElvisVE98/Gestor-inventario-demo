@@ -13,6 +13,7 @@
  *   /activos                      → ProtectedRoute → Layout → ActivosPage
  *   /activos/:id                  → ProtectedRoute → Layout → ActivoDetallePage
  *   /activos/categoria/:categoria → ProtectedRoute → Layout → CategoriaActivosPage
+ *   /archivo                      → ProtectedRoute → Layout → ArchivoPage
  *   /configuracion/perfil         → ProtectedRoute → Layout → PerfilPage
  *   /configuracion/usuarios       → ProtectedRoute → Layout → UsuariosPage
  *
@@ -33,6 +34,7 @@ import ActivoDetallePage from './pages/ActivoDetallePage'
 import CategoriaActivosPage from './pages/CategoriaActivosPage'
 import PerfilPage from './pages/PerfilPage'
 import UsuariosPage from './pages/UsuariosPage'
+import ArchivoPage from './pages/ArchivoPage'
 
 export default function App() {
   return (
@@ -74,6 +76,9 @@ export default function App() {
               */}
               <Route path="activos/categoria/:categoria" element={<CategoriaActivosPage />} />
               <Route path="activos/:id" element={<ActivoDetallePage />} />
+
+              {/* Archivo histórico — solo lectura */}
+              <Route path="archivo" element={<ArchivoPage />} />
 
               {/* Módulo de configuración */}
               <Route path="configuracion/perfil"   element={<PerfilPage />} />

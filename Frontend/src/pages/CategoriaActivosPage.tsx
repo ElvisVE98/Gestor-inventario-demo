@@ -19,6 +19,7 @@ import { useEffect, useState } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { getActivos } from '../services/activo.service'
 import type { Activo, CategoriaActivo } from '../types/activo.types'
+import { exportarCsv } from '../utils/exportarCsv'
 
 // ── Mapa de categorías ────────────────────────────────────────────────────────
 
@@ -284,6 +285,82 @@ function TablaLicencias({ activos }: { activos: Activo[] }) {
   )
 }
 
+// ── Helper de exportación por categoría ──────────────────────────────────────
+
+/**
+ * Mapea un activo a las columnas relevantes según su categoría.
+ * Cada categoría tiene campos distintos — exportamos exactamente lo que
+ * muestra su tabla para que el CSV coincida con lo que el usuario ve.
+ */
+function mapearParaCsv(a: Activo, slug: string): Record<string, unknown> {
+  // Campos comunes a todas las categorías
+  const base = {
+    nombre_equipo: a.nombre_equipo,
+    estado:        a.estado,
+    marca:         a.marca  ?? '',
+    modelo:        a.modelo ?? '',
+  }
+
+  if (slug === 'equipos') {
+    return {
+      ...base,
+      sistema_operativo:    a.sistema_operativo    ?? '',
+      arquitectura:         a.arquitectura         ?? '',
+      procesador:           a.procesador           ?? '',
+      generacion_procesador: a.generacion_procesador ?? '',
+      anio_procesador:      a.anio_procesador      ?? '',
+      ram:                  a.ram                  ?? '',
+      disco:                a.disco                ?? '',
+      mac_lan:              a.mac                  ?? '',
+      mac_wifi:             a.mac_wifi             ?? '',
+      teamviewer:           a.teamviewer           ?? '',
+      anydesk:              a.anydesk              ?? '',
+      alza_notebook:        a.alza_notebook ? 'Sí' : '',
+      monitor_extra:        a.monitor_extra ? 'Sí' : '',
+      mochila:              a.mochila       ? 'Sí' : '',
+      auriculares:          a.auriculares   ? 'Sí' : '',
+      costo:                a.costo         ?? '',
+      fecha_compra:         a.fecha_compra  ?? '',
+      fecha_entrega:        a.fecha_entrega ?? '',
+    }
+  }
+
+  if (slug === 'celulares') {
+    return {
+      ...base,
+      imei:            a.imei             ?? '',
+      sistema_operativo: a.sistema_operativo ?? '',
+      anio_lanzamiento: a.anio_lanzamiento ?? '',
+      costo:           a.costo            ?? '',
+      fecha_compra:    a.fecha_compra     ?? '',
+      fecha_entrega:   a.fecha_entrega    ?? '',
+    }
+  }
+
+  if (slug === 'tablets') {
+    return {
+      ...base,
+      imei:            a.imei              ?? '',
+      sistema_operativo: a.sistema_operativo ?? '',
+      arquitectura:    a.arquitectura      ?? '',
+      ram:             a.ram               ?? '',
+      anio_lanzamiento: a.anio_lanzamiento ?? '',
+      costo:           a.costo             ?? '',
+      fecha_compra:    a.fecha_compra      ?? '',
+      fecha_entrega:   a.fecha_entrega     ?? '',
+    }
+  }
+
+  // licencias
+  return {
+    nombre_equipo:   a.nombre_equipo,
+    estado:          a.estado,
+    tipo_suite:      a.tipo_suite      ?? '',
+    tipo_licencia:   a.tipo_licencia   ?? '',
+    especificaciones: a.especificaciones ?? '',
+  }
+}
+
 // ── Componente principal ──────────────────────────────────────────────────────
 
 export default function CategoriaActivosPage() {
@@ -332,13 +409,25 @@ export default function CategoriaActivosPage() {
           <span className="mx-1">›</span>
           <span>{titulo}</span>
         </p>
-        <div className="flex items-end justify-between">
+        <div className="flex items-center justify-between">
           <h1 className="text-xl font-bold text-slate-800">{titulo}</h1>
-          {!cargando && (
-            <p className="text-sm text-slate-400">
-              {activos.length} registro{activos.length !== 1 ? 's' : ''}
-            </p>
-          )}
+          <div className="flex items-center gap-3">
+            {!cargando && (
+              <p className="text-sm text-slate-400">
+                {activos.length} registro{activos.length !== 1 ? 's' : ''}
+              </p>
+            )}
+            {/* Botón habilitado solo cuando hay datos cargados */}
+            {!cargando && activos.length > 0 && slug && (
+              <button
+                onClick={() => exportarCsv(slug, activos.map(a => mapearParaCsv(a, slug)))}
+                className="px-4 py-2 text-sm font-medium text-slate-700 bg-white
+                           border border-slate-300 hover:bg-slate-50 rounded-lg transition-colors"
+              >
+                ↓ Exportar CSV
+              </button>
+            )}
+          </div>
         </div>
       </div>
 

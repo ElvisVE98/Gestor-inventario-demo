@@ -18,6 +18,7 @@ import type { Activo, CategoriaActivo, EstadoActivo } from '../types/activo.type
 import ModalCrearActivo  from '../components/ModalCrearActivo'
 import ModalEditarActivo from '../components/ModalEditarActivo'
 import ModalConfirmar    from '../components/ModalConfirmar'
+import { exportarCsv }  from '../utils/exportarCsv'
 
 // ── Badges ────────────────────────────────────────────────────────────────────
 
@@ -150,6 +151,29 @@ export default function ActivosPage() {
 
   const hayFiltros = !!(filtroCat || filtroEstado || busqueda)
 
+  // ── Handler de exportación ───────────────────────────────────────────────
+
+  /**
+   * Exporta los activos actualmente visibles (respetando todos los filtros activos)
+   * como archivo CSV. Solo incluye las columnas solicitadas — no IDs internos.
+   */
+  function handleExportarCsv() {
+    const filas = activosFiltrados.map(a => ({
+      nombre_equipo: a.nombre_equipo,
+      categoria:     a.categoria,
+      estado:        a.estado,
+      marca:         a.marca         ?? '',
+      modelo:        a.modelo        ?? '',
+      procesador:    a.procesador    ?? '',
+      ram:           a.ram           ?? '',
+      disco:         a.disco         ?? '',
+      mac:           a.mac           ?? '',
+      imei:          a.imei          ?? '',
+      fecha_entrega: a.fecha_entrega ?? '',
+    }))
+    exportarCsv('activos', filas)
+  }
+
   // ── Handlers CRUD ─────────────────────────────────────────────────────────
 
   function handleCreado(nuevo: Activo) {
@@ -195,13 +219,25 @@ export default function ActivosPage() {
             {activos.length} activo{activos.length !== 1 ? 's' : ''} en el inventario
           </p>
         </div>
-        <button
-          onClick={() => setModalCrear(true)}
-          className="px-4 py-2 text-sm font-medium text-white bg-blue-600
-                     hover:bg-blue-700 rounded-lg transition-colors"
-        >
-          + Nuevo activo
-        </button>
+        <div className="flex items-center gap-2">
+          {/* Exportar solo se habilita cuando hay resultados visibles */}
+          <button
+            onClick={handleExportarCsv}
+            disabled={activosFiltrados.length === 0}
+            className="px-4 py-2 text-sm font-medium text-slate-700 bg-white
+                       border border-slate-300 hover:bg-slate-50 rounded-lg
+                       transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            ↓ Exportar CSV
+          </button>
+          <button
+            onClick={() => setModalCrear(true)}
+            className="px-4 py-2 text-sm font-medium text-white bg-blue-600
+                       hover:bg-blue-700 rounded-lg transition-colors"
+          >
+            + Nuevo activo
+          </button>
+        </div>
       </div>
 
       {/* ── Links rápidos por categoría ────────────────────────────────────

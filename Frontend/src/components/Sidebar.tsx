@@ -30,13 +30,15 @@ import { useAuth } from '../context/AuthContext'
 // ── Items de navegación principal ─────────────────────────────────────────────
 
 /**
- * Los ítems de primer nivel que son links directos (Dashboard, Personas).
+ * Los ítems de primer nivel que son links directos (Dashboard, Personas, Archivo).
  * Los ítems con sub-items (Activos, Configuración) se manejan por separado
  * como botones de toggle, no como NavLinks.
  */
 const navDirectos = [
   { to: '/',         etiqueta: 'Dashboard', icono: '▦', end: true  },
   { to: '/personas', etiqueta: 'Personas',  icono: '◉', end: false },
+  // Archivo: página de solo lectura para registros desactivados/dados de baja
+  { to: '/archivo',  etiqueta: 'Archivo',   icono: '⊡', end: false },
 ]
 
 /**

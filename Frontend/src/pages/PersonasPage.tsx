@@ -12,13 +12,14 @@
  *   - Toggle "Ver inactivos" que muestra/oculta personas desactivadas
  */
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Fragment } from 'react'
 import { Link } from 'react-router-dom'
-import { getPersonasTodas, desactivarPersona } from '../services/persona.service'
-import type { Persona } from '../types/persona.types'
+import { getPersonasTodas, desactivarPersona, getPersonaById } from '../services/persona.service'
+import type { Persona, ActivoAsignado } from '../types/persona.types'
 import ModalCrearPersona  from '../components/ModalCrearPersona'
 import ModalEditarPersona from '../components/ModalEditarPersona'
 import ModalConfirmar     from '../components/ModalConfirmar'
+import { exportarCsv }   from '../utils/exportarCsv'
 
 /**
  * Badge de estado para una persona.
@@ -38,6 +39,30 @@ function BadgeEstado({ estado }: { estado: string }) {
                       bg-slate-100 text-slate-500">
       Inactivo
     </span>
+  )
+}
+
+// ── Chip de resumen de activos por categoría ─────────────────────────────────
+
+/**
+ * Muestra el ícono de una categoría + la cantidad de activos asignados.
+ * Si count=0 muestra "—" en gris para indicar que no hay ninguno.
+ */
+function ChipCategoria({ icono, label, count }: { icono: string; label: string; count: number }) {
+  return (
+    <div className="flex items-center gap-1.5">
+      <span className="text-sm leading-none">{icono}</span>
+      <span className="text-xs text-slate-500">{label}</span>
+      {count > 0 ? (
+        // Badge con cantidad — fondo azul claro para destacar
+        <span className="text-xs font-semibold text-blue-700 bg-blue-100 px-1.5 py-0.5 rounded-full">
+          {count}
+        </span>
+      ) : (
+        // Sin activos en esta categoría
+        <span className="text-xs text-slate-300 font-medium">—</span>
+      )}
+    </div>
   )
 }
 
@@ -82,6 +107,15 @@ export default function PersonasPage() {
   const [filtroCentroCosto, setFiltroCentroCosto] = useState('')
   // Toggle: por defecto muestra solo activas, igual que antes
   const [verInactivos,     setVerInactivos]     = useState(false)
+
+  // ── Accordion de activos ─────────────────────────────────────────────────
+  // ID de la persona expandida; null = ninguna (accordion cerrado)
+  const [filaExpandida,  setFilaExpandida]  = useState<string | null>(null)
+  // Cache de activos por persona — se llena con lazy loading al expandir
+  // undefined = no cargado aún; [] = cargado pero sin activos
+  const [cachActivos,    setCachActivos]    = useState<Record<string, ActivoAsignado[]>>({})
+  // Indica qué filas están cargando sus activos en este momento
+  const [cargandoFila,   setCargandoFila]   = useState<Record<string, boolean>>({})
 
   // ── Modales ───────────────────────────────────────────────────────────────
   const [modalCrearAbierto,          setModalCrearAbierto]          = useState(false)
@@ -129,6 +163,58 @@ export default function PersonasPage() {
   // Contadores para el subtítulo del encabezado
   const totalActivas   = personas.filter(p => p.estado === 'activo').length
   const totalInactivas = personas.filter(p => p.estado !== 'activo').length
+
+  // ── Handler del accordion ────────────────────────────────────────────────
+
+  /**
+   * Abre o cierra el panel de activos de una persona.
+   * Si la fila ya está abierta → la cierra.
+   * Si está cerrada → la abre y carga los activos con lazy loading.
+   * Solo se llama a la API la primera vez; las visitas siguientes usan el cache.
+   */
+  async function toggleFila(personaId: string) {
+    // Clic en la misma fila → colapsar
+    if (filaExpandida === personaId) {
+      setFilaExpandida(null)
+      return
+    }
+
+    // Expandir esta fila
+    setFilaExpandida(personaId)
+
+    // Los datos ya están en cache — no volver a pedir
+    if (cachActivos[personaId] !== undefined) return
+
+    // Primera vez: marcar como cargando, obtener datos y guardar en cache
+    setCargandoFila(prev => ({ ...prev, [personaId]: true }))
+    try {
+      const detalle = await getPersonaById(personaId)
+      setCachActivos(prev => ({ ...prev, [personaId]: detalle.activos_asignados }))
+    } catch {
+      // Si falla, guardamos array vacío para no reintentar indefinidamente
+      setCachActivos(prev => ({ ...prev, [personaId]: [] }))
+    } finally {
+      setCargandoFila(prev => ({ ...prev, [personaId]: false }))
+    }
+  }
+
+  // ── Handler de exportación ────────────────────────────────────────────────
+
+  /**
+   * Exporta las personas actualmente visibles (respetando todos los filtros activos)
+   * como archivo CSV. Solo incluye las columnas relevantes — no IDs internos.
+   */
+  function handleExportarCsv() {
+    const filas = personasFiltradas.map(p => ({
+      nombre:       p.nombre,
+      rut:          p.rut,
+      cargo:        p.cargo,
+      sucursal:     p.sucursal,
+      centro_costo: p.centro_costo,
+      estado:       p.estado,
+    }))
+    exportarCsv('personas', filas)
+  }
 
   // ── Handlers de modales ───────────────────────────────────────────────────
 
@@ -202,14 +288,26 @@ export default function PersonasPage() {
             )}
           </p>
         </div>
-        <button
-          onClick={() => setModalCrearAbierto(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700
-                     text-white text-sm font-medium rounded-lg transition-colors"
-        >
-          <span>+</span>
-          Nueva persona
-        </button>
+        <div className="flex items-center gap-2">
+          {/* Exportar solo se habilita cuando hay resultados visibles */}
+          <button
+            onClick={handleExportarCsv}
+            disabled={personasFiltradas.length === 0}
+            className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-300
+                       hover:bg-slate-50 text-slate-700 text-sm font-medium rounded-lg
+                       transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            ↓ Exportar CSV
+          </button>
+          <button
+            onClick={() => setModalCrearAbierto(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700
+                       text-white text-sm font-medium rounded-lg transition-colors"
+          >
+            <span>+</span>
+            Nueva persona
+          </button>
+        </div>
       </div>
 
       {/* ── Barra de filtros ─────────────────────────────────────────────── */}
@@ -290,80 +388,146 @@ export default function PersonasPage() {
                 </td>
               </tr>
             ) : (
-              personasFiltradas.map(persona => (
-                <tr
-                  key={persona.id}
-                  className={`hover:bg-slate-50 transition-colors ${
-                    // Filas inactivas con fondo levemente distinto para distinguirlas
-                    persona.estado !== 'activo' ? 'opacity-60' : ''
-                  }`}
-                >
+              personasFiltradas.map(persona => {
+                const expandida = filaExpandida === persona.id
+                const activos   = cachActivos[persona.id] ?? []
+                const cargando  = cargandoFila[persona.id] ?? false
 
-                  {/* Nombre */}
-                  <td className="px-4 py-3 font-medium text-slate-800">
-                    {persona.nombre}
-                  </td>
+                // Conteo por categoría para los chips
+                const nEquipos   = activos.filter(a => a.categoria === 'equipo').length
+                const nCelulares = activos.filter(a => a.categoria === 'celular').length
+                const nTablets   = activos.filter(a => a.categoria === 'tablet').length
+                const nLicencias = activos.filter(a => a.categoria === 'licencia').length
 
-                  {/* RUT */}
-                  <td className="px-4 py-3 text-slate-500 font-mono text-xs">
-                    {persona.rut}
-                  </td>
+                return (
+                  // Fragment para emitir la fila principal + la fila del accordion
+                  // sin envolver en un <div> que rompería la estructura de la tabla
+                  <Fragment key={persona.id}>
 
-                  {/* Cargo */}
-                  <td className="px-4 py-3 text-slate-600">{persona.cargo}</td>
+                    {/* ── Fila principal ──────────────────────────────────── */}
+                    <tr
+                      className={`transition-colors ${
+                        expandida
+                          ? 'bg-blue-50/40'         // resaltada cuando está expandida
+                          : 'hover:bg-slate-50'
+                      } ${
+                        persona.estado !== 'activo' ? 'opacity-60' : ''
+                      }`}
+                    >
 
-                  {/* Sucursal */}
-                  <td className="px-4 py-3 text-slate-600">{persona.sucursal}</td>
-
-                  {/* Centro de costo — nuevo */}
-                  <td className="px-4 py-3 text-slate-500 font-mono text-xs">
-                    {persona.centro_costo || '—'}
-                  </td>
-
-                  {/* Estado */}
-                  <td className="px-4 py-3">
-                    <BadgeEstado estado={persona.estado} />
-                  </td>
-
-                  {/* Acciones */}
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2 justify-end">
-
-                      <Link
-                        to={`/personas/${persona.id}`}
-                        className="px-3 py-1 text-xs font-medium text-blue-600
-                                   hover:text-blue-800 hover:bg-blue-50
-                                   rounded-md transition-colors"
-                      >
-                        Ver
-                      </Link>
-
-                      {/* Editar — disponible para activos e inactivos */}
-                      <button
-                        onClick={() => setPersonaParaEditar(persona)}
-                        className="px-3 py-1 text-xs font-medium text-slate-600
-                                   hover:text-slate-800 hover:bg-slate-100
-                                   rounded-md transition-colors"
-                      >
-                        Editar
-                      </button>
-
-                      {/* Desactivar — solo visible para personas activas */}
-                      {persona.estado === 'activo' && (
+                      {/* Nombre — clic abre/cierra el accordion */}
+                      <td className="px-4 py-3">
                         <button
-                          onClick={() => setPersonaParaDesactivar(persona)}
-                          className="px-3 py-1 text-xs font-medium text-red-500
-                                     hover:text-red-700 hover:bg-red-50
-                                     rounded-md transition-colors"
+                          type="button"
+                          onClick={() => toggleFila(persona.id)}
+                          className="flex items-center gap-1.5 font-medium text-slate-800
+                                     hover:text-blue-600 transition-colors text-left"
                         >
-                          Desactivar
+                          {/* Flecha indicadora — rota 90° cuando está expandida */}
+                          <span className={`text-xs text-slate-400 transition-transform duration-200 ${
+                            expandida ? 'rotate-90' : ''
+                          }`}>
+                            ▸
+                          </span>
+                          {persona.nombre}
                         </button>
-                      )}
+                      </td>
 
-                    </div>
-                  </td>
-                </tr>
-              ))
+                      {/* RUT */}
+                      <td className="px-4 py-3 text-slate-500 font-mono text-xs">
+                        {persona.rut}
+                      </td>
+
+                      {/* Cargo */}
+                      <td className="px-4 py-3 text-slate-600">{persona.cargo}</td>
+
+                      {/* Sucursal */}
+                      <td className="px-4 py-3 text-slate-600">{persona.sucursal}</td>
+
+                      {/* Centro de costo */}
+                      <td className="px-4 py-3 text-slate-500 font-mono text-xs">
+                        {persona.centro_costo || '—'}
+                      </td>
+
+                      {/* Estado */}
+                      <td className="px-4 py-3">
+                        <BadgeEstado estado={persona.estado} />
+                      </td>
+
+                      {/* Acciones */}
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2 justify-end">
+
+                          <Link
+                            to={`/personas/${persona.id}`}
+                            className="px-3 py-1 text-xs font-medium text-blue-600
+                                       hover:text-blue-800 hover:bg-blue-50
+                                       rounded-md transition-colors"
+                          >
+                            Ver
+                          </Link>
+
+                          <button
+                            onClick={() => setPersonaParaEditar(persona)}
+                            className="px-3 py-1 text-xs font-medium text-slate-600
+                                       hover:text-slate-800 hover:bg-slate-100
+                                       rounded-md transition-colors"
+                          >
+                            Editar
+                          </button>
+
+                          {persona.estado === 'activo' && (
+                            <button
+                              onClick={() => setPersonaParaDesactivar(persona)}
+                              className="px-3 py-1 text-xs font-medium text-red-500
+                                         hover:text-red-700 hover:bg-red-50
+                                         rounded-md transition-colors"
+                            >
+                              Desactivar
+                            </button>
+                          )}
+
+                        </div>
+                      </td>
+                    </tr>
+
+                    {/* ── Fila accordion — visible solo cuando expandida=true ── */}
+                    {expandida && (
+                      <tr className="bg-blue-50/30">
+                        {/* Borde izquierdo azul como indicador visual de expansión */}
+                        <td
+                          colSpan={7}
+                          className="px-6 py-3 border-l-4 border-l-blue-300"
+                        >
+                          {cargando ? (
+                            // Estado de carga mientras llega la respuesta de la API
+                            <p className="text-xs text-slate-400 animate-pulse">
+                              Cargando activos...
+                            </p>
+                          ) : activos.length === 0 && cachActivos[persona.id] !== undefined ? (
+                            // La API respondió pero no tiene activos asignados
+                            <p className="text-xs text-slate-400">
+                              Sin activos asignados actualmente
+                            </p>
+                          ) : (
+                            // Chips por categoría
+                            <div className="flex items-center gap-6 flex-wrap">
+                              <span className="text-xs font-medium text-slate-500 mr-1">
+                                Activos asignados:
+                              </span>
+                              <ChipCategoria icono="💻" label="Equipos"   count={nEquipos} />
+                              <ChipCategoria icono="📱" label="Celulares" count={nCelulares} />
+                              <ChipCategoria icono="📋" label="Tablets"   count={nTablets} />
+                              <ChipCategoria icono="🔑" label="Licencias" count={nLicencias} />
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    )}
+
+                  </Fragment>
+                )
+              })
             )}
           </tbody>
         </table>

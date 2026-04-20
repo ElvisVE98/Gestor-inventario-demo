@@ -507,7 +507,7 @@ export default function DashboardPage() {
                 <LabelList
                   dataKey="costo_total"
                   position="right"
-                  formatter={(v: number) => formatCLP(v)}
+                  formatter={(v) => formatCLP(Number(v ?? 0))}
                   style={{ fontSize: 11, fill: '#475569', fontVariantNumeric: 'tabular-nums' }}
                 />
               </Bar>

@@ -41,15 +41,122 @@ export interface DashboardKPIs {
   // ── Totales de personas y asignaciones ─────────────────────────────────
   personas_activas: number;        // Personas que actualmente trabajan en la empresa
   asignaciones_activas: number;    // Asignaciones abiertas (fecha_fin IS NULL)
+
+  // ── Distribución geográfica y por centro de costo ──────────────────────
+  costo_por_sucursal:   Array<{ sucursal: string; costo_total: number }>;  // Suma de costo de activos asignados por sucursal
+  activos_por_sucursal: Array<{ sucursal: string; total: number }>;         // Cantidad de activos asignados por sucursal
+  top_centros_costo:    Array<{ centro_costo: string; total: number }>;     // Top 10 centros de costo con más activos asignados
+}
+
+// ── Tipos internos de filas Supabase ────────────────────────────────────────
+
+/** Fila retornada al hacer JOIN asignaciones→activos(costo)+personas(sucursal) */
+interface FilaCostoPorSucursal {
+  activos:  { costo: number | null } | null;
+  personas: { sucursal: string }     | null;
+}
+
+/** Fila retornada al hacer JOIN asignaciones→personas(sucursal) */
+interface FilaActivosPorSucursal {
+  personas: { sucursal: string } | null;
+}
+
+/** Fila retornada al hacer JOIN asignaciones→personas(centro_costo) */
+interface FilaCentrosCosto {
+  personas: { centro_costo: string | null } | null;
+}
+
+/**
+ * Suma el costo de los activos asignados actualmente, agrupado por sucursal de la persona.
+ * Solo considera asignaciones activas (fecha_fin IS NULL) y costos > 0.
+ * Retorna el array ordenado de mayor a menor costo.
+ */
+async function getCostoPorSucursal(): Promise<Array<{ sucursal: string; costo_total: number }>> {
+  // Traemos persona.sucursal y activo.costo para cada asignación activa.
+  // Supabase soporta JOINs implícitos mediante foreign keys con esta sintaxis.
+  const { data, error } = await supabase
+    .from('asignaciones')
+    .select('activos(costo), personas(sucursal)')
+    .is('fecha_fin', null);
+
+  if (error) throw new Error(`Error en costo_por_sucursal: ${error.message}`);
+
+  // Agregamos en JS: acumulamos costo por sucursal usando un Map.
+  const mapa = new Map<string, number>();
+
+  for (const fila of (data as unknown as FilaCostoPorSucursal[])) {
+    const sucursal = fila.personas?.sucursal;
+    const costo    = fila.activos?.costo;
+    // Ignoramos nulls y ceros (activos sin precio cargado o sin persona)
+    if (!sucursal || !costo || costo <= 0) continue;
+    mapa.set(sucursal, (mapa.get(sucursal) ?? 0) + costo);
+  }
+
+  return Array.from(mapa.entries())
+    .map(([sucursal, costo_total]) => ({ sucursal, costo_total }))
+    .sort((a, b) => b.costo_total - a.costo_total);
+}
+
+/**
+ * Cuenta los activos asignados actualmente, agrupado por sucursal de la persona.
+ * Solo considera asignaciones activas (fecha_fin IS NULL).
+ * Retorna el array ordenado de mayor a menor cantidad.
+ */
+async function getActivosPorSucursal(): Promise<Array<{ sucursal: string; total: number }>> {
+  const { data, error } = await supabase
+    .from('asignaciones')
+    .select('personas(sucursal)')
+    .is('fecha_fin', null);
+
+  if (error) throw new Error(`Error en activos_por_sucursal: ${error.message}`);
+
+  const mapa = new Map<string, number>();
+
+  for (const fila of (data as unknown as FilaActivosPorSucursal[])) {
+    const sucursal = fila.personas?.sucursal;
+    if (!sucursal) continue;
+    mapa.set(sucursal, (mapa.get(sucursal) ?? 0) + 1);
+  }
+
+  return Array.from(mapa.entries())
+    .map(([sucursal, total]) => ({ sucursal, total }))
+    .sort((a, b) => b.total - a.total);
+}
+
+/**
+ * Cuenta los activos asignados actualmente, agrupado por centro_costo de la persona.
+ * Solo considera asignaciones activas (fecha_fin IS NULL).
+ * Retorna los top 10 centros de costo con más activos asignados.
+ */
+async function getTopCentrosCosto(): Promise<Array<{ centro_costo: string; total: number }>> {
+  const { data, error } = await supabase
+    .from('asignaciones')
+    .select('personas(centro_costo)')
+    .is('fecha_fin', null);
+
+  if (error) throw new Error(`Error en top_centros_costo: ${error.message}`);
+
+  const mapa = new Map<string, number>();
+
+  for (const fila of (data as unknown as FilaCentrosCosto[])) {
+    const cc = fila.personas?.centro_costo;
+    if (!cc) continue;
+    mapa.set(cc, (mapa.get(cc) ?? 0) + 1);
+  }
+
+  return Array.from(mapa.entries())
+    .map(([centro_costo, total]) => ({ centro_costo, total }))
+    .sort((a, b) => b.total - a.total)
+    .slice(0, 10);  // Top 10
 }
 
 /**
  * Obtiene todos los KPIs del dashboard en una sola llamada.
  * Ejecuta las queries en paralelo para minimizar el tiempo de respuesta.
  *
- * Cada query usa `head: true` — esto le dice a Supabase que solo queremos
+ * Cada query de COUNT usa `head: true` — esto le dice a Supabase que solo queremos
  * el COUNT del header HTTP, sin traer ninguna fila en el body.
- * Es equivalente a `SELECT COUNT(*) FROM tabla WHERE ...` pero sin overhead.
+ * Las 3 queries de distribución traen filas y agregan en JS.
  */
 export async function obtenerKPIs(): Promise<DashboardKPIs> {
   // Lanzamos todas las queries al mismo tiempo.
@@ -67,6 +174,9 @@ export async function obtenerKPIs(): Promise<DashboardKPIs> {
     resLicencias,
     resPersonas,
     resAsignaciones,
+    costoPorSucursal,
+    activosPorSucursal,
+    topCentrosCosto,
   ] = await Promise.all([
     // ── Total de activos en servicio (excluye dados de baja) ─────────────
     // Los dados de baja son un estado retirado — no deben sumarse al inventario activo.
@@ -133,10 +243,15 @@ export async function obtenerKPIs(): Promise<DashboardKPIs> {
       .from('asignaciones')
       .select('*', { count: 'exact', head: true })
       .is('fecha_fin', null),
+
+    // ── Distribución por sucursal y centro de costo ───────────────────────
+    // Estas 3 funciones hacen JOINs y agregan en JS.
+    getCostoPorSucursal(),
+    getActivosPorSucursal(),
+    getTopCentrosCosto(),
   ]);
 
-  // Verificamos errores. Revisamos cada resultado individualmente para poder
-  // dar un mensaje descriptivo de qué query falló.
+  // Verificamos errores de las queries de COUNT.
   if (resTotal.error)        throw new Error(`Error contando activos: ${resTotal.error.message}`);
   if (resDisponibles.error)  throw new Error(`Error contando disponibles: ${resDisponibles.error.message}`);
   if (resAsignados.error)    throw new Error(`Error contando asignados: ${resAsignados.error.message}`);
@@ -148,6 +263,7 @@ export async function obtenerKPIs(): Promise<DashboardKPIs> {
   if (resLicencias.error)    throw new Error(`Error contando licencias: ${resLicencias.error.message}`);
   if (resPersonas.error)     throw new Error(`Error contando personas: ${resPersonas.error.message}`);
   if (resAsignaciones.error) throw new Error(`Error contando asignaciones: ${resAsignaciones.error.message}`);
+  // Las 3 funciones de distribución lanzan sus propios errores internamente.
 
   // Supabase devuelve el count en la propiedad `.count` del resultado.
   // Usamos `?? 0` como fallback por si count llega null (tabla vacía u otro edge case).
@@ -163,5 +279,8 @@ export async function obtenerKPIs(): Promise<DashboardKPIs> {
     total_licencias:            resLicencias.count      ?? 0,
     personas_activas:           resPersonas.count       ?? 0,
     asignaciones_activas:       resAsignaciones.count   ?? 0,
+    costo_por_sucursal:         costoPorSucursal,
+    activos_por_sucursal:       activosPorSucursal,
+    top_centros_costo:          topCentrosCosto,
   };
 }

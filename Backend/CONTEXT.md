@@ -280,11 +280,26 @@ El backend verifica `passwordActual` con Supabase antes de cambiarla.
     "total_tablets": 10,
     "total_licencias": 10,
     "personas_activas": 60,
-    "asignaciones_activas": 68
+    "asignaciones_activas": 68,
+    "costo_por_sucursal": [
+      { "sucursal": "Santiago", "costo_total": 4500000 },
+      { "sucursal": "Valparaíso", "costo_total": 1200000 }
+    ],
+    "activos_por_sucursal": [
+      { "sucursal": "Santiago", "total": 52 },
+      { "sucursal": "Valparaíso", "total": 16 }
+    ],
+    "top_centros_costo": [
+      { "centro_costo": "TI-001", "total": 30 },
+      { "centro_costo": "ADM-002", "total": 18 }
+    ]
   }
 }
 ```
-`total_activos` y los conteos por categoría **excluyen** los dados de baja.
+- `total_activos` y los conteos por categoría **excluyen** los dados de baja.
+- `costo_por_sucursal`: suma del campo `costo` de activos con asignación activa, agrupado por sucursal de la persona. Ignora nulls y ceros. Ordenado de mayor a menor.
+- `activos_por_sucursal`: cantidad de activos con asignación activa (fecha_fin IS NULL), agrupado por sucursal. Ordenado de mayor a menor.
+- `top_centros_costo`: top 10 centros de costo con más activos asignados actualmente. Ordenado de mayor a menor.
 
 ### Formato de respuesta estándar
 Todos los endpoints responden con la misma estructura:
@@ -393,6 +408,7 @@ Todos los endpoints responden con la misma estructura:
 | `/activos/categoria/celulares` | CategoriaActivosPage | Tabla completa de celulares |
 | `/activos/categoria/tablets` | CategoriaActivosPage | Tabla completa de tablets |
 | `/activos/categoria/licencias` | CategoriaActivosPage | Tabla completa de licencias |
+| `/archivo` | ArchivoPage | Solo lectura: personas inactivas + activos dados de baja |
 | `/configuracion/perfil` | PerfilPage | Email del usuario + cambiar contraseña |
 | `/configuracion/usuarios` | UsuariosPage | Gestión de usuarios del sistema |
 

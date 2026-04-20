@@ -11,7 +11,10 @@
  */
 
 import { useEffect, useState } from 'react'
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
+import {
+  PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, LabelList,
+} from 'recharts'
 import type { DashboardKPIs } from '../types/dashboard.types'
 import { obtenerDashboard } from '../services/dashboard.service'
 
@@ -27,6 +30,18 @@ function fechaHoy(): string {
   })
   // toLocaleDateString devuelve minúsculas en es-CL; capitalizamos la primera letra
   return str.charAt(0).toUpperCase() + str.slice(1)
+}
+
+/**
+ * Formatea un número como moneda CLP sin decimales.
+ * Ej: 4500000 → "$4.500.000"
+ */
+function formatCLP(valor: number): string {
+  return new Intl.NumberFormat('es-CL', {
+    style:                 'currency',
+    currency:              'CLP',
+    maximumFractionDigits: 0,
+  }).format(valor)
 }
 
 // ── Íconos SVG inline ─────────────────────────────────────────────────────────
@@ -188,6 +203,37 @@ function TooltipDonut({ active, payload }: { active?: boolean; payload?: Array<{
   )
 }
 
+/**
+ * Tooltip para el gráfico de barras de costo.
+ * Muestra el monto formateado como CLP para que sea legible (no el número crudo).
+ */
+function TooltipCLP({ active, payload }: { active?: boolean; payload?: Array<{ value: number }> }) {
+  if (!active || !payload?.length) return null
+  return (
+    <div className="bg-white border border-slate-200 rounded-lg shadow-lg px-3 py-2">
+      <p className="text-sm font-semibold text-slate-800">{formatCLP(payload[0].value)}</p>
+    </div>
+  )
+}
+
+/**
+ * Tooltip para los gráficos de conteo de activos.
+ * Muestra el nombre de la categoría (label) y la cantidad de activos.
+ */
+function TooltipCantidad({ active, payload, label }: {
+  active?:  boolean
+  payload?: Array<{ value: number }>
+  label?:   string
+}) {
+  if (!active || !payload?.length) return null
+  return (
+    <div className="bg-white border border-slate-200 rounded-lg shadow-lg px-3 py-2">
+      {label && <p className="text-xs text-slate-500 mb-0.5">{label}</p>}
+      <p className="text-sm font-semibold text-slate-800">{payload[0].value} activos</p>
+    </div>
+  )
+}
+
 // ── Datos del gráfico de dona ─────────────────────────────────────────────────
 
 /**
@@ -200,6 +246,24 @@ const CATEGORIAS: Array<{ key: keyof DashboardKPIs; nombre: string; color: strin
   { key: 'total_celulares', nombre: 'Celulares', color: '#6366f1' }, // indigo-500
   { key: 'total_tablets',   nombre: 'Tablets',   color: '#8b5cf6' }, // violet-500
   { key: 'total_licencias', nombre: 'Licencias', color: '#06b6d4' }, // cyan-500
+]
+
+/**
+ * Paleta de 10 colores para el gráfico de dona de centros de costo.
+ * Se asignan en orden según el índice de cada segmento.
+ * Se usan hex directos — Tailwind purga clases con colores dinámicos en build.
+ */
+const COLORES_CENTROS = [
+  '#3b82f6', // blue-500
+  '#6366f1', // indigo-500
+  '#8b5cf6', // violet-500
+  '#ec4899', // pink-500
+  '#f59e0b', // amber-500
+  '#10b981', // emerald-500
+  '#14b8a6', // teal-500
+  '#f97316', // orange-500
+  '#06b6d4', // cyan-500
+  '#84cc16', // lime-500
 ]
 
 // ── Componente principal ──────────────────────────────────────────────────────
@@ -246,6 +310,17 @@ export default function DashboardPage() {
     nombre: c.nombre,
     valor:  kpis[c.key] as number,
     color:  c.color,
+  }))
+
+  // Datos para los 3 nuevos gráficos — ya vienen ordenados del backend (mayor → menor)
+  // Filtramos costo > 0 y limitamos a TOP 10 para que los gráficos no sean demasiado largos
+  const datosCosto   = kpis.costo_por_sucursal.filter(d => d.costo_total > 0).slice(0, 10)
+  const datosActivos = kpis.activos_por_sucursal.slice(0, 10)
+
+  // datosCentros: agregamos un color por índice para cada segmento de la dona
+  const datosCentros = kpis.top_centros_costo.map((d, i) => ({
+    ...d,
+    color: COLORES_CENTROS[i % COLORES_CENTROS.length],
   }))
 
   // ── Dashboard con datos ────────────────────────────────────────────────────
@@ -394,6 +469,141 @@ export default function DashboardPage() {
           colorValor="text-rose-700"
           icono={<IcoArchivo cls="w-5 h-5 text-rose-600" />}
         />
+      </div>
+
+      {/* ── SECCIÓN 5: Gráficos de distribución por sucursal y centro de costo ── */}
+
+      {/* ── Gráfico 1: Costo por sucursal — ancho completo ──────────────────── */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+        <h2 className="text-sm font-semibold text-slate-700 mb-1">Costo por sucursal</h2>
+        <p className="text-xs text-slate-400 mb-4">Top 10 · valor de activos asignados actualmente</p>
+
+        {datosCosto.length === 0 ? (
+          <p className="text-sm text-slate-400 text-center py-12">Sin datos de costo disponibles</p>
+        ) : (
+          // layout="vertical" convierte el BarChart en barras horizontales.
+          // El margen derecho es amplio para que el LabelList (monto CLP) no se corte.
+          <ResponsiveContainer width="100%" height={360}>
+            <BarChart
+              data={datosCosto}
+              layout="vertical"
+              margin={{ top: 4, right: 140, left: 0, bottom: 4 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
+              {/* YAxis tipo "category" muestra los nombres de sucursal */}
+              <YAxis
+                type="category"
+                dataKey="sucursal"
+                width={130}
+                tick={{ fontSize: 12, fill: '#64748b' }}
+                tickLine={false}
+                axisLine={false}
+              />
+              {/* XAxis oculto — el valor exacto ya aparece como label en la barra */}
+              <XAxis type="number" hide />
+              <Tooltip content={<TooltipCLP />} cursor={{ fill: '#eff6ff' }} />
+              <Bar dataKey="costo_total" fill="#3b82f6" radius={[0, 4, 4, 0]} maxBarSize={30}>
+                {/* LabelList pinta el monto formateado al final de cada barra */}
+                <LabelList
+                  dataKey="costo_total"
+                  position="right"
+                  formatter={(v: number) => formatCLP(v)}
+                  style={{ fontSize: 11, fill: '#475569', fontVariantNumeric: 'tabular-nums' }}
+                />
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        )}
+      </div>
+
+      {/* ── Gráficos 2 y 3: lado a lado ──────────────────────────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        {/* Gráfico 2: Top centros de costo — dona con leyenda ────────────────── */}
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+          <h2 className="text-sm font-semibold text-slate-700 mb-1">Top 10 centros de costo</h2>
+          <p className="text-xs text-slate-400 mb-4">Por cantidad de activos asignados actualmente</p>
+
+          {datosCentros.length === 0 ? (
+            <p className="text-sm text-slate-400 text-center py-12">Sin datos disponibles</p>
+          ) : (
+            <>
+              {/* Dona: innerRadius crea el hueco central, nameKey alimenta el tooltip */}
+              <ResponsiveContainer width="100%" height={220}>
+                <PieChart>
+                  <Pie
+                    data={datosCentros}
+                    dataKey="total"
+                    nameKey="centro_costo"
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={55}
+                    outerRadius={90}
+                    paddingAngle={2}
+                    strokeWidth={0}
+                  >
+                    {datosCentros.map(d => (
+                      <Cell key={d.centro_costo} fill={d.color} />
+                    ))}
+                  </Pie>
+                  {/* Reutilizamos TooltipDonut — muestra name + value + "activos" */}
+                  <Tooltip content={<TooltipDonut />} />
+                </PieChart>
+              </ResponsiveContainer>
+
+              {/* Leyenda manual: punto de color + nombre + cantidad */}
+              <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 mt-3">
+                {datosCentros.map(d => (
+                  <div key={d.centro_costo} className="flex items-center gap-2 min-w-0">
+                    <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: d.color }} />
+                    <span className="text-xs text-slate-600 truncate">{d.centro_costo}</span>
+                    <span className="text-xs font-semibold text-slate-800 ml-auto shrink-0">{d.total}</span>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Gráfico 3: Activos por sucursal — barras horizontales con label ──── */}
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+          <h2 className="text-sm font-semibold text-slate-700 mb-1">Activos por sucursal</h2>
+          <p className="text-xs text-slate-400 mb-4">Top 10 · activos asignados actualmente</p>
+
+          {datosActivos.length === 0 ? (
+            <p className="text-sm text-slate-400 text-center py-12">Sin datos disponibles</p>
+          ) : (
+            <ResponsiveContainer width="100%" height={360}>
+              <BarChart
+                data={datosActivos}
+                layout="vertical"
+                margin={{ top: 4, right: 48, left: 0, bottom: 4 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
+                <YAxis
+                  type="category"
+                  dataKey="sucursal"
+                  width={130}
+                  tick={{ fontSize: 12, fill: '#64748b' }}
+                  tickLine={false}
+                  axisLine={false}
+                />
+                {/* XAxis oculto — el número exacto aparece como label en la barra */}
+                <XAxis type="number" hide />
+                <Tooltip content={<TooltipCantidad />} cursor={{ fill: '#f0fdfa' }} />
+                <Bar dataKey="total" fill="#14b8a6" radius={[0, 4, 4, 0]} maxBarSize={30}>
+                  {/* LabelList pinta el conteo al final de cada barra */}
+                  <LabelList
+                    dataKey="total"
+                    position="right"
+                    style={{ fontSize: 12, fill: '#475569', fontWeight: 600 }}
+                  />
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+
       </div>
 
     </div>

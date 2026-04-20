@@ -27,4 +27,9 @@ export interface DashboardKPIs {
   // ── Personas y asignaciones ─────────────────────────────────────────────
   personas_activas: number;
   asignaciones_activas: number;
+
+  // ── Distribución geográfica y por centro de costo ──────────────────────
+  costo_por_sucursal:   Array<{ sucursal: string; costo_total: number }>;
+  activos_por_sucursal: Array<{ sucursal: string; total: number }>;
+  top_centros_costo:    Array<{ centro_costo: string; total: number }>;
 }

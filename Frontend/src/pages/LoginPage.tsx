@@ -139,8 +139,8 @@ export default function LoginPage() {
 
         {/* ── Encabezado — nombre del sistema y subtítulo ───────────────────── */}
         <div className="text-center mb-8">
-          <p className="text-[28px] font-bold text-white tracking-tight">Curifor</p>
-          <p className="text-[13px] text-slate-400 mt-1.5">Gestión de Inventario TI</p>
+          <p className="text-[28px] font-bold text-white tracking-tight">DEMO</p>
+          <p className="text-[13px] text-slate-400 mt-1.5">Gestor de Inventario</p>
         </div>
 
         {/* ════════════════════════════════════════════════════════════════════
@@ -233,6 +233,13 @@ export default function LoginPage() {
             >
               {enviando ? 'Ingresando...' : 'Ingresar'}
             </button>
+
+            {/* Credenciales de demo — solo para portafolio */}
+            <div className="bg-white/[5%] border border-white/10 rounded-[10px] px-3.5 py-2.5 text-center">
+            <p className="text-xs text-slate-400 mb-1">Credenciales de prueba</p>
+            <p className="text-xs text-slate-300">📧 admin@prueba.com</p>
+            <p className="text-xs text-slate-300">🔑 admin</p>
+            </div>
 
             {/* Link ¿Olvidaste tu contraseña? */}
             <div className="text-center">

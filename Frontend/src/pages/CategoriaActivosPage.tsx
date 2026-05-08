@@ -370,6 +370,7 @@ export default function CategoriaActivosPage() {
   const [activos, setActivos]   = useState<Activo[]>([])
   const [cargando, setCargando] = useState(true)
   const [error, setError]       = useState<string | null>(null)
+  const [busqueda,setBusqueda] = useState('') // para barra de busqueda
 
   // Convertimos el slug de la URL a la categoría del backend
   const categoria = slug ? SLUG_A_CATEGORIA[slug] : undefined
@@ -397,6 +398,24 @@ export default function CategoriaActivosPage() {
   if (!slug || !SLUG_A_CATEGORIA[slug]) return null
 
   const titulo = TITULO[slug]
+
+
+    const activosFiltrados = activos.filter(a =>{
+    if(!busqueda) return true // si no hay texto, muestra todos
+    const normalizada = busqueda.toLowerCase()
+    return (
+      a.nombre_equipo.toLowerCase().includes(normalizada) ||
+      a.marca?.toLowerCase().includes(normalizada)        ||
+      a.modelo?.toLowerCase().includes(normalizada)       ||
+      a.mac?.toLowerCase().includes(normalizada)          ||
+      a.estado.toLowerCase().includes(normalizada)        ||
+      a.imei?.toLowerCase().includes(normalizada)
+    )
+  })
+
+
+
+
 
   return (
     <div className="p-8">
@@ -431,6 +450,24 @@ export default function CategoriaActivosPage() {
         </div>
       </div>
 
+      {/* Barra de búsqueda */}
+        <div className='mb-5'>
+          <input 
+          type="text"
+          value={busqueda}
+          onChange={e => setBusqueda(e.target.value)}
+          placeholder='Buscar por nombre, Mac, Modelo, Marca o estado...'
+          className='px-3 py-2 text-sm border border-slate-300 rounded-lg placeholder:text-slate-400 text-slate-800
+          focus:outline-none focus:ring-2 focus:ring-blue-500 w-full max-w-md'
+           />
+        </div>
+
+
+
+
+
+
+
       {/* Error */}
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 mb-4">
@@ -454,10 +491,10 @@ export default function CategoriaActivosPage() {
         ) : (
           <div className="bg-white rounded-xl border border-slate-200 overflow-x-auto">
             {/* Renderizamos la tabla específica según la categoría */}
-            {slug === 'equipos'   && <TablaEquipos   activos={activos} />}
-            {slug === 'celulares' && <TablaCelulares activos={activos} />}
-            {slug === 'tablets'   && <TablaTablets   activos={activos} />}
-            {slug === 'licencias' && <TablaLicencias activos={activos} />}
+            {slug === 'equipos'   && <TablaEquipos   activos={activosFiltrados} />}
+            {slug === 'celulares' && <TablaCelulares activos={activosFiltrados} />}
+            {slug === 'tablets'   && <TablaTablets   activos={activosFiltrados} />}
+            {slug === 'licencias' && <TablaLicencias activos={activosFiltrados} />}
           </div>
         )
       )}

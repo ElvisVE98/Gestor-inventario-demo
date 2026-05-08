@@ -24,6 +24,8 @@ import dotenv from 'dotenv';
 // Cargamos las variables de entorno al inicio
 dotenv.config();
 
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+
 // ── Variables de entorno ──────────────────────────────────────────────────────
 
 const supabaseUrl      = process.env.SUPABASE_URL;

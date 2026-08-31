@@ -14,7 +14,7 @@
  * query en secuencia, todas corren al mismo tiempo.
  */
 
-import { supabase } from '../supabaseClient';
+import { supabase } from '../config/supabaseClient';
 
 /**
  * Forma del objeto que devuelve obtenerKPIs.

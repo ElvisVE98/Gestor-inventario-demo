@@ -79,8 +79,10 @@ export type CategoriaActivo = 'equipo' | 'celular' | 'tablet' | 'licencia';
  * - asignado: actualmente en uso por una persona
  * - en_mantenimiento: en reparación o revisión, no disponible
  * - dado_de_baja: retirado del servicio (equivale al "borrado lógico")
+ * - prestamo: asignado de forma temporal o informal
+ * - robo: activo reportado como robado o extraviado
  */
-export type EstadoActivo = 'disponible' | 'asignado' | 'en_mantenimiento' | 'dado_de_baja';
+export type EstadoActivo = 'disponible' | 'asignado' | 'en_mantenimiento' | 'dado_de_baja' | 'prestamo' | 'robo';
 
 /**
  * Datos para CREAR un activo nuevo.

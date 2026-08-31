@@ -11,7 +11,7 @@
  * - Mantener los controllers delgados y legibles
  */
 
-import { supabase } from '../supabaseClient';
+import { supabase } from '../config/supabaseClient';
 import {
   Persona,
   PersonaConActivos,
@@ -111,8 +111,9 @@ export async function obtenerPersonaPorId(id: string): Promise<PersonaConActivos
  * Valida que el RUT no esté duplicado antes de insertar.
  *
  * @param datos - Campos para crear la persona (sin id ni timestamps)
+ * @param realizado_por - Email del usuario autenticado que realiza la creación
  */
-export async function crearPersona(datos: CrearPersonaDTO): Promise<Persona> {
+export async function crearPersona(datos: CrearPersonaDTO, realizado_por?: string): Promise<Persona> {
   // Validaciones básicas de campos obligatorios
   if (!datos.rut?.trim()) throw badRequest('El campo rut es obligatorio');
   if (!datos.nombre?.trim()) throw badRequest('El campo nombre es obligatorio');
@@ -148,12 +149,13 @@ export async function crearPersona(datos: CrearPersonaDTO): Promise<Persona> {
 
   const personaCreada = data as Persona;
 
-  // Registramos en el historial que se creó una persona
+  // Registramos en el historial que se creó una persona con el autor real
   await registrarHistorial({
     accion: 'PERSONA_CREADA',
     tabla_afectada: 'personas',
     registro_id: personaCreada.id,
     detalle: `Se creó la persona: ${personaCreada.nombre} (${personaCreada.rut})`,
+    realizado_por,
   });
 
   return personaCreada;
@@ -165,8 +167,13 @@ export async function crearPersona(datos: CrearPersonaDTO): Promise<Persona> {
  *
  * @param id - UUID de la persona a editar
  * @param datos - Campos a actualizar (todos opcionales)
+ * @param realizado_por - Email del usuario autenticado que realiza la edición
  */
-export async function editarPersona(id: string, datos: EditarPersonaDTO): Promise<Persona> {
+export async function editarPersona(
+  id: string,
+  datos: EditarPersonaDTO,
+  realizado_por?: string
+): Promise<Persona> {
   // Verificamos que la persona existe antes de intentar editar
   const { data: existente, error: errorBusqueda } = await supabase
     .from('personas')
@@ -197,6 +204,7 @@ export async function editarPersona(id: string, datos: EditarPersonaDTO): Promis
     tabla_afectada: 'personas',
     registro_id: id,
     detalle: `Se editaron los datos de: ${personaEditada.nombre}`,
+    realizado_por,
   });
 
   return personaEditada;
@@ -212,8 +220,9 @@ export async function editarPersona(id: string, datos: EditarPersonaDTO): Promis
  * NUNCA se borra físicamente la persona de la base de datos.
  *
  * @param id - UUID de la persona a desactivar
+ * @param realizado_por - Email del usuario autenticado que realiza la desactivación
  */
-export async function desactivarPersona(id: string): Promise<void> {
+export async function desactivarPersona(id: string, realizado_por?: string): Promise<void> {
   // Verificamos que la persona existe
   const { data: persona, error: errorBusqueda } = await supabase
     .from('personas')
@@ -286,5 +295,6 @@ export async function desactivarPersona(id: string): Promise<void> {
     tabla_afectada: 'personas',
     registro_id: id,
     detalle: `Se desvinculó a ${persona.nombre}. Se liberaron ${asignaciones?.length ?? 0} activos.`,
+    realizado_por,
   });
 }

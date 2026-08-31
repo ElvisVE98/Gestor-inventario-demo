@@ -17,7 +17,7 @@
  *   4. Dado de baja = nunca se puede asignar (estado 'dado_de_baja')
  */
 
-import { supabase } from '../supabaseClient';
+import { supabase } from '../config/supabaseClient';
 import {
   Asignacion,
   AsignacionConDetalle,
@@ -161,11 +161,15 @@ export async function obtenerAsignacionPorId(id: string): Promise<AsignacionConD
  *
  * Luego de insertar:
  *   - Cambia el estado del activo a 'asignado'
- *   - Registra la acción en el historial
+ *   - Registra la acción en el historial con el usuario responsable
  *
  * @param datos - persona_id, activo_id y opcionalmente fecha_inicio y observaciones
+ * @param realizado_por - Email del usuario autenticado que crea la asignación
  */
-export async function crearAsignacion(datos: CrearAsignacionDTO): Promise<AsignacionConDetalle> {
+export async function crearAsignacion(
+  datos: CrearAsignacionDTO,
+  realizado_por?: string
+): Promise<AsignacionConDetalle> {
   // Validamos campos obligatorios
   if (!datos.persona_id) throw badRequest('El campo persona_id es obligatorio');
   if (!datos.activo_id) throw badRequest('El campo activo_id es obligatorio');
@@ -259,6 +263,7 @@ export async function crearAsignacion(datos: CrearAsignacionDTO): Promise<Asigna
     tabla_afectada: 'asignaciones',
     registro_id: (nuevaAsig as Asignacion).id,
     detalle: `"${activo.nombre_equipo}" asignado a ${persona.nombre}`,
+    realizado_por,
   });
 
   // Devolvemos el detalle completo con datos de persona y activo ya expandidos
@@ -267,14 +272,20 @@ export async function crearAsignacion(datos: CrearAsignacionDTO): Promise<Asigna
 
 /**
  * Cierra una asignación (devuelve el activo).
- * Establece fecha_fin = ahora y cambia el estado del activo a 'disponible'.
+ * Establece fecha_fin = ahora, guarda observaciones si se enviaron y cambia el estado del activo a 'disponible'.
  *
  * Esta operación es el inverso de crearAsignacion.
  * Después de esta operación el activo puede volver a asignarse.
  *
  * @param id - UUID de la asignación a cerrar
+ * @param observaciones - Nota opcional sobre la devolución del activo
+ * @param realizado_por - Email del usuario autenticado que recibe la devolución
  */
-export async function devolverActivo(id: string): Promise<AsignacionConDetalle> {
+export async function devolverActivo(
+  id: string,
+  observaciones?: string,
+  realizado_por?: string
+): Promise<AsignacionConDetalle> {
   // Verificamos que la asignación existe
   const { data: asignacion, error: errorBusqueda } = await supabase
     .from('asignaciones')
@@ -283,6 +294,7 @@ export async function devolverActivo(id: string): Promise<AsignacionConDetalle> 
       activo_id,
       persona_id,
       fecha_fin,
+      observaciones,
       personas (nombre),
       activos (nombre_equipo)
     `)
@@ -303,9 +315,15 @@ export async function devolverActivo(id: string): Promise<AsignacionConDetalle> 
 
   // ── Cierre de la asignación ───────────────────────────────────────────────
   // Ponemos fecha_fin para marcar que el período de uso terminó
+  // Si se enviaron nuevas observaciones de devolución, las actualizamos
+  const payloadActualizacion: { fecha_fin: string; observaciones?: string } = { fecha_fin: ahora };
+  if (observaciones?.trim()) {
+    payloadActualizacion.observaciones = observaciones.trim();
+  }
+
   const { error: errorCierre } = await supabase
     .from('asignaciones')
-    .update({ fecha_fin: ahora })
+    .update(payloadActualizacion)
     .eq('id', id);
 
   if (errorCierre) {
@@ -327,12 +345,14 @@ export async function devolverActivo(id: string): Promise<AsignacionConDetalle> 
   // Usamos los datos del join para el mensaje sin hacer otra consulta
   const nombreActivo = (asignacion.activos as any)?.nombre_equipo ?? asignacion.activo_id;
   const nombrePersona = (asignacion.personas as any)?.nombre ?? asignacion.persona_id;
+  const detalleObs = observaciones?.trim() ? ` (Nota: ${observaciones.trim()})` : '';
 
   await registrarHistorial({
     accion: 'ACTIVO_DEVUELTO',
     tabla_afectada: 'asignaciones',
     registro_id: id,
-    detalle: `"${nombreActivo}" devuelto por ${nombrePersona}`,
+    detalle: `"${nombreActivo}" devuelto por ${nombrePersona}${detalleObs}`,
+    realizado_por,
   });
 
   // Devolvemos la asignación ya cerrada con todos sus detalles expandidos

@@ -16,7 +16,7 @@
  *   - darDeBajaActivo: borrado lógico (estado → 'dado_de_baja') + cierre de asignaciones
  */
 
-import { supabase } from '../supabaseClient';
+import { supabase } from '../config/supabaseClient';
 import {
   Activo,
   CrearActivoDTO,
@@ -149,8 +149,9 @@ export async function obtenerActivoPorId(id: string): Promise<ActivoDetalle> {
  * El estado inicial siempre es 'disponible' salvo que se especifique otro.
  *
  * @param datos - Campos para crear el activo (nombre_equipo y categoria son obligatorios)
+ * @param realizado_por - Email del usuario autenticado que realiza la creación
  */
-export async function crearActivo(datos: CrearActivoDTO): Promise<Activo> {
+export async function crearActivo(datos: CrearActivoDTO, realizado_por?: string): Promise<Activo> {
   // Validaciones básicas de campos obligatorios
   if (!datos.nombre_equipo?.trim()) throw badRequest('El campo nombre_equipo es obligatorio');
   if (!datos.categoria) throw badRequest('El campo categoria es obligatorio');
@@ -190,6 +191,7 @@ export async function crearActivo(datos: CrearActivoDTO): Promise<Activo> {
     tabla_afectada: 'activos',
     registro_id: activoCreado.id,
     detalle: `Se creó el activo: ${activoCreado.nombre_equipo} (${activoCreado.categoria})`,
+    realizado_por,
   });
 
   return activoCreado;
@@ -202,8 +204,13 @@ export async function crearActivo(datos: CrearActivoDTO): Promise<Activo> {
  *
  * @param id - UUID del activo a editar
  * @param datos - Campos a actualizar (todos opcionales, sin categoria)
+ * @param realizado_por - Email del usuario autenticado que realiza la edición
  */
-export async function editarActivo(id: string, datos: EditarActivoDTO): Promise<Activo> {
+export async function editarActivo(
+  id: string,
+  datos: EditarActivoDTO,
+  realizado_por?: string
+): Promise<Activo> {
   // Verificamos que el activo existe antes de intentar editar
   const { data: existente, error: errorBusqueda } = await supabase
     .from('activos')
@@ -247,6 +254,7 @@ export async function editarActivo(id: string, datos: EditarActivoDTO): Promise<
     tabla_afectada: 'activos',
     registro_id: id,
     detalle: `Se editaron los datos de: ${activoEditado.nombre_equipo}`,
+    realizado_por,
   });
 
   return activoEditado;
@@ -260,8 +268,9 @@ export async function editarActivo(id: string, datos: EditarActivoDTO): Promise<
  * NUNCA se borra físicamente — se mantiene el historial de lo que existió.
  *
  * @param id - UUID del activo a dar de baja
+ * @param realizado_por - Email del usuario autenticado que realiza la baja
  */
-export async function darDeBajaActivo(id: string): Promise<void> {
+export async function darDeBajaActivo(id: string, realizado_por?: string): Promise<void> {
   // Verificamos que el activo existe
   const { data: activo, error: errorBusqueda } = await supabase
     .from('activos')
@@ -319,5 +328,6 @@ export async function darDeBajaActivo(id: string): Promise<void> {
     tabla_afectada: 'activos',
     registro_id: id,
     detalle: `Se dio de baja: ${activo.nombre_equipo}.${asignacion ? ' Se cerró su asignación activa.' : ''}`,
+    realizado_por,
   });
 }

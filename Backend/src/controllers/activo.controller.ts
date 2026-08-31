@@ -11,7 +11,8 @@
  * Si algo falla, llama a next(error) para que el errorHandler lo capture.
  */
 
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
+import { RequestAutenticado } from '../middlewares/auth.middleware';
 import {
   listarActivos,
   obtenerActivoPorId,
@@ -31,7 +32,7 @@ import { CrearActivoDTO, EditarActivoDTO, FiltrosActivo, CategoriaActivo, Estado
  *   ?estado=disponible|asignado|en_mantenimiento|dado_de_baja
  *   ?incluirDadosDeBaja=true  → incluye los activos retirados del servicio
  */
-export async function getActivos(req: Request, res: Response, next: NextFunction): Promise<void> {
+export async function getActivos(req: RequestAutenticado, res: Response, next: NextFunction): Promise<void> {
   try {
     // Convertimos el string del query param a boolean
     const incluirDadosDeBaja = req.query.incluirDadosDeBaja === 'true';
@@ -64,7 +65,7 @@ export async function getActivos(req: Request, res: Response, next: NextFunction
  * GET /api/activos/:id
  * Devuelve el detalle de un activo con la persona que lo tiene asignado actualmente.
  */
-export async function getActivoById(req: Request, res: Response, next: NextFunction): Promise<void> {
+export async function getActivoById(req: RequestAutenticado, res: Response, next: NextFunction): Promise<void> {
   try {
     // req.params siempre llega como string en rutas Express
     const id = req.params.id as string;
@@ -86,15 +87,12 @@ export async function getActivoById(req: Request, res: Response, next: NextFunct
  * Body mínimo: { nombre_equipo, categoria }
  * El resto de campos son opcionales y dependen de la categoría.
  */
-export async function postActivo(req: Request, res: Response, next: NextFunction): Promise<void> {
+export async function postActivo(req: RequestAutenticado, res: Response, next: NextFunction): Promise<void> {
   try {
-    // Pasamos el body completo casteado al DTO.
-    // El service valida los campos obligatorios y lanza badRequest si faltan.
-    // Usamos el tipo para autocompletar pero no restringimos campos extra aquí —
-    // el service solo usa lo que conoce.
     const datos = req.body as CrearActivoDTO;
+    const realizadoPor = req.usuario?.email;
 
-    const nuevoActivo = await crearActivo(datos);
+    const nuevoActivo = await crearActivo(datos, realizadoPor);
 
     // 201 Created es el código correcto para recursos recién creados
     res.status(201).json({
@@ -112,12 +110,13 @@ export async function postActivo(req: Request, res: Response, next: NextFunction
  * Edita un activo existente. Acepta cualquier subconjunto de los campos editables.
  * No se puede cambiar la categoría (el service lo ignora por diseño).
  */
-export async function putActivo(req: Request, res: Response, next: NextFunction): Promise<void> {
+export async function putActivo(req: RequestAutenticado, res: Response, next: NextFunction): Promise<void> {
   try {
     const id = req.params.id as string;
     const datos = req.body as EditarActivoDTO;
+    const realizadoPor = req.usuario?.email;
 
-    const activoEditado = await editarActivo(id, datos);
+    const activoEditado = await editarActivo(id, datos, realizadoPor);
 
     res.json({
       success: true,
@@ -135,11 +134,12 @@ export async function putActivo(req: Request, res: Response, next: NextFunction)
  * Si tenía una asignación activa, la cierra automáticamente.
  * No borra físicamente el registro.
  */
-export async function deleteActivo(req: Request, res: Response, next: NextFunction): Promise<void> {
+export async function deleteActivo(req: RequestAutenticado, res: Response, next: NextFunction): Promise<void> {
   try {
     const id = req.params.id as string;
+    const realizadoPor = req.usuario?.email;
 
-    await darDeBajaActivo(id);
+    await darDeBajaActivo(id, realizadoPor);
 
     res.json({
       success: true,

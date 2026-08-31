@@ -15,7 +15,7 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
-import { supabase } from '../supabaseClient';
+import { supabase } from '../config/supabaseClient';
 
 /**
  * Extiende el tipo Request de Express para poder adjuntar el usuario autenticado.

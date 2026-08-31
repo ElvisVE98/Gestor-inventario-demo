@@ -11,7 +11,7 @@
  * que la operación real se complete aunque el log falle.
  */
 
-import { supabase } from '../supabaseClient';
+import { supabase } from '../config/supabaseClient';
 import {
   HistorialActividad,
   CrearHistorialDTO,

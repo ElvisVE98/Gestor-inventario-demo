@@ -35,10 +35,10 @@ import { useAuth } from '../context/AuthContext'
  * como botones de toggle, no como NavLinks.
  */
 const navDirectos = [
-  { to: '/',         etiqueta: 'Dashboard', icono: '▦', end: true  },
-  { to: '/personas', etiqueta: 'Personas',  icono: '◉', end: false },
+  { to: '/', etiqueta: 'Dashboard', icono: '▦', end: true },
+  { to: '/personas', etiqueta: 'Personas', icono: '◉', end: false },
   // Archivo: página de solo lectura para registros desactivados/dados de baja
-  { to: '/archivo',  etiqueta: 'Archivo',   icono: '⊡', end: false },
+  { to: '/archivo', etiqueta: 'Archivo', icono: '⊡', end: false },
 ]
 
 /**
@@ -47,10 +47,10 @@ const navDirectos = [
  * Los siguientes van a las sub-páginas por categoría con tablas específicas.
  */
 const navCategorias = [
-  { to: '/activos',                     etiqueta: 'Todos',     end: true  },
-  { to: '/activos/categoria/equipos',   etiqueta: 'Equipos',   end: false },
+  { to: '/activos', etiqueta: 'Todos', end: true },
+  { to: '/activos/categoria/equipos', etiqueta: 'Equipos', end: false },
   { to: '/activos/categoria/celulares', etiqueta: 'Celulares', end: false },
-  { to: '/activos/categoria/tablets',   etiqueta: 'Tablets',   end: false },
+  { to: '/activos/categoria/tablets', etiqueta: 'Tablets', end: false },
   { to: '/activos/categoria/licencias', etiqueta: 'Licencias', end: false },
 ]
 
@@ -59,8 +59,8 @@ const navCategorias = [
  * Se muestran u ocultan según el estado configAbierto.
  */
 const navConfiguracion = [
-  { to: '/configuracion/perfil',   etiqueta: 'Mi perfil' },
-  { to: '/configuracion/usuarios', etiqueta: 'Usuarios'  },
+  { to: '/configuracion/perfil', etiqueta: 'Mi perfil' },
+  { to: '/configuracion/usuarios', etiqueta: 'Usuarios' },
 ]
 
 // ── Helpers de estilo ─────────────────────────────────────────────────────────
@@ -108,7 +108,7 @@ export default function Sidebar() {
    * Configuración empieza cerrado.
    */
   const [activosAbierto, setActivosAbierto] = useState(true)
-  const [configAbierto,  setConfigAbierto]  = useState(false)
+  const [configAbierto, setConfigAbierto] = useState(false)
 
   /**
    * Cierra la sesión y redirige al login.
@@ -119,7 +119,7 @@ export default function Sidebar() {
   }
 
   return (
-    <aside className="w-60 shrink-0 bg-slate-900 flex flex-col min-h-screen">
+    <aside className="w-60 shrink-0 bg-slate-900 flex flex-col h-screen sticky top-0">
 
       {/* ── Logo / título del sistema ─────────────────────────────────────── */}
       <div className="px-6 py-5 border-b border-slate-700">

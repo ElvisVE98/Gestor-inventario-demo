@@ -43,7 +43,8 @@ ti-inventario-api/
 │   └── src/
 │       ├── app.ts                        # Instancia Express: middlewares + rutas registradas
 │       ├── server.ts                     # Punto de entrada: levanta el servidor HTTP
-│       ├── supabaseClient.ts             # Instancia única del cliente Supabase (service_role)
+│       ├── config/
+│       │   └── supabaseClient.ts         # Instancia de Supabase (anon y service_role)
 │       │
 │       ├── types/                        # Interfaces TypeScript por módulo
 │       │   ├── persona.types.ts          # Persona, CrearPersonaDTO, EditarPersonaDTO, PersonaConActivos
@@ -56,6 +57,7 @@ ti-inventario-api/
 │       │   └── auth.middleware.ts        # verificarToken: lee Bearer token, llama getUser(), adjunta req.usuario
 │       │
 │       ├── services/                     # Lógica de negocio + acceso a Supabase
+│       │   ├── auth.service.ts           # iniciarSesion, recuperarPassword, cerrarSesion, CRUD admin usuarios
 │       │   ├── persona.service.ts        # listarPersonas, obtenerPersonaPorId, crearPersona, editarPersona, desactivarPersona
 │       │   ├── activo.service.ts         # listarActivos, obtenerActivoPorId, crearActivo, editarActivo, darDeBajaActivo
 │       │   ├── asignacion.service.ts     # listarAsignaciones, obtenerAsignacionPorId, crearAsignacion, devolverActivo
@@ -63,6 +65,7 @@ ti-inventario-api/
 │       │   └── dashboard.service.ts      # obtenerKPIs (queries en paralelo con Promise.all)
 │       │
 │       ├── controllers/                  # Handlers HTTP: extrae params → llama service → responde
+│       │   ├── auth.controller.ts
 │       │   ├── persona.controller.ts
 │       │   ├── activo.controller.ts
 │       │   ├── asignacion.controller.ts

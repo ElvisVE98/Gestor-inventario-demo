@@ -323,6 +323,9 @@ export default function DashboardPage() {
     color: COLORES_CENTROS[i % COLORES_CENTROS.length],
   }))
 
+  // Gran total de activos históricos registrados (incluye dados de baja) para el cálculo de porcentajes
+  const granTotalActivos = kpis.total_activos + kpis.activos_dados_de_baja
+
   // ── Dashboard con datos ────────────────────────────────────────────────────
   return (
     <div className="p-6 lg:p-8 max-w-full space-y-6">
@@ -416,28 +419,28 @@ export default function DashboardPage() {
             <BarraEstado
               label="Disponibles"
               valor={kpis.activos_disponibles}
-              total={kpis.total_activos}
+              total={granTotalActivos}
               colorBarra="bg-emerald-500"
               colorPunto="bg-emerald-500"
             />
             <BarraEstado
               label="Asignados"
               valor={kpis.activos_asignados}
-              total={kpis.total_activos}
+              total={granTotalActivos}
               colorBarra="bg-indigo-500"
               colorPunto="bg-indigo-500"
             />
             <BarraEstado
               label="En mantenimiento"
               valor={kpis.activos_en_mantenimiento}
-              total={kpis.total_activos}
+              total={granTotalActivos}
               colorBarra="bg-amber-500"
               colorPunto="bg-amber-500"
             />
             <BarraEstado
               label="Dados de baja"
               valor={kpis.activos_dados_de_baja}
-              total={kpis.total_activos}
+              total={granTotalActivos}
               colorBarra="bg-rose-400"
               colorPunto="bg-rose-400"
             />

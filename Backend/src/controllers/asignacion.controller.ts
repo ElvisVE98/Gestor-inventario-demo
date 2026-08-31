@@ -11,7 +11,8 @@
  * Si algo falla, llama a next(error) para que el errorHandler lo capture.
  */
 
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
+import { RequestAutenticado } from '../middlewares/auth.middleware';
 import {
   listarAsignaciones,
   obtenerAsignacionPorId,
@@ -32,7 +33,7 @@ import { CrearAsignacionDTO } from '../types/asignacion.types';
  * Los filtros se pueden combinar: ?persona_id=X&soloActivas=false
  * muestra TODO el historial de asignaciones de esa persona.
  */
-export async function getAsignaciones(req: Request, res: Response, next: NextFunction): Promise<void> {
+export async function getAsignaciones(req: RequestAutenticado, res: Response, next: NextFunction): Promise<void> {
   try {
     // Por defecto solo mostramos las activas para que el listado principal sea útil
     // El frontend puede pedir el historial completo con ?soloActivas=false
@@ -58,7 +59,7 @@ export async function getAsignaciones(req: Request, res: Response, next: NextFun
  * GET /api/asignaciones/:id
  * Devuelve el detalle de una asignación con datos completos de persona y activo.
  */
-export async function getAsignacionById(req: Request, res: Response, next: NextFunction): Promise<void> {
+export async function getAsignacionById(req: RequestAutenticado, res: Response, next: NextFunction): Promise<void> {
   try {
     const id = req.params.id as string;
 
@@ -80,11 +81,12 @@ export async function getAsignacionById(req: Request, res: Response, next: NextF
  *
  * Body: { persona_id, activo_id, fecha_inicio?, observaciones? }
  */
-export async function postAsignacion(req: Request, res: Response, next: NextFunction): Promise<void> {
+export async function postAsignacion(req: RequestAutenticado, res: Response, next: NextFunction): Promise<void> {
   try {
     const datos = req.body as CrearAsignacionDTO;
+    const realizadoPor = req.usuario?.email;
 
-    const nuevaAsignacion = await crearAsignacion(datos);
+    const nuevaAsignacion = await crearAsignacion(datos, realizadoPor);
 
     // 201 Created es el código correcto para recursos recién creados
     res.status(201).json({
@@ -100,16 +102,17 @@ export async function postAsignacion(req: Request, res: Response, next: NextFunc
 /**
  * PUT /api/asignaciones/:id/devolver
  * Cierra una asignación (marca el activo como devuelto).
- * Pone fecha_fin = ahora y cambia el estado del activo a 'disponible'.
+ * Pone fecha_fin = ahora, guarda notas de devolución y cambia el estado del activo a 'disponible'.
  *
- * Usamos /devolver como sub-ruta porque es una acción con nombre específico.
- * Esto hace que la intención sea obvia solo leyendo la URL, sin ambigüedad.
+ * Body opcional: { observaciones?: string }
  */
-export async function putDevolverActivo(req: Request, res: Response, next: NextFunction): Promise<void> {
+export async function putDevolverActivo(req: RequestAutenticado, res: Response, next: NextFunction): Promise<void> {
   try {
     const id = req.params.id as string;
+    const { observaciones } = (req.body ?? {}) as { observaciones?: string };
+    const realizadoPor = req.usuario?.email;
 
-    const asignacionCerrada = await devolverActivo(id);
+    const asignacionCerrada = await devolverActivo(id, observaciones, realizadoPor);
 
     res.json({
       success: true,

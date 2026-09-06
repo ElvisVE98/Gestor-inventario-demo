@@ -16,8 +16,8 @@ import Sidebar from './Sidebar'
  */
 export default function Layout() {
   return (
-    // Contenedor flex en fila que ocupa toda la altura de la pantalla
-    <div className="flex min-h-screen bg-slate-50">
+    // Contenedor flex en fila que ocupa exactamente la altura de la pantalla
+    <div className="flex h-screen overflow-hidden bg-slate-50">
 
       {/* Barra lateral de navegación — siempre visible */}
       <Sidebar />

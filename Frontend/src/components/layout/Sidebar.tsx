@@ -132,7 +132,7 @@ export default function Sidebar() {
       </div>
 
       {/* ── Navegación principal ──────────────────────────────────────────── */}
-      <nav className="flex-1 px-3 py-4 flex flex-col gap-1">
+      <nav className="flex-1 px-3 py-4 flex flex-col gap-1 overflow-y-auto">
 
         {/* Dashboard y Personas — links directos */}
         {navDirectos.map((item) => (

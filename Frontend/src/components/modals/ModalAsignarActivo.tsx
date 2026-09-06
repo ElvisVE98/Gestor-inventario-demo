@@ -14,12 +14,12 @@
 import { useEffect, useState } from 'react'
 import type { ChangeEvent } from 'react'
 import Modal from './Modal'
-import { getPersonas } from '../services/persona.service'
-import { getActivos } from '../services/activo.service'
-import { crearAsignacion } from '../services/asignacion.service'
-import type { Persona } from '../types/persona.types'
-import type { Activo } from '../types/activo.types'
-import type { AsignacionConDetalle } from '../types/asignacion.types'
+import { getPersonas } from '../../api/persona.api'
+import { getActivos } from '../../api/activo.api'
+import { crearAsignacion } from '../../api/asignacion.api'
+import type { Persona } from '../../types/persona.types'
+import type { Activo } from '../../types/activo.types'
+import type { AsignacionConDetalle } from '../../types/asignacion.types'
 
 interface Props {
   onClose: () => void

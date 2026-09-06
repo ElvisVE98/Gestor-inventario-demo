@@ -10,8 +10,8 @@
 import { useState } from 'react'
 import type { ChangeEvent } from 'react'
 import Modal from './Modal'
-import { editarPersona } from '../services/persona.service'
-import type { Persona, EditarPersonaDTO } from '../types/persona.types'
+import { editarPersona } from '../../api/persona.api'
+import type { Persona, EditarPersonaDTO } from '../../types/persona.types'
 
 interface Props {
   persona: Persona                       // Persona a editar — precarga el formulario

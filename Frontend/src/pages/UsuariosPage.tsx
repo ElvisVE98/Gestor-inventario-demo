@@ -17,10 +17,10 @@
 import { useEffect, useState } from 'react'
 import type { ChangeEvent } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { getUsuarios, crearUsuario, eliminarUsuario } from '../services/auth.service'
+import { getUsuarios, crearUsuario, eliminarUsuario } from '../api/auth.api'
 import type { UsuarioAdmin } from '../types/auth.types'
-import Modal from '../components/Modal'
-import ModalConfirmar from '../components/ModalConfirmar'
+import Modal from '../components/modals/Modal'
+import ModalConfirmar from '../components/modals/ModalConfirmar'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

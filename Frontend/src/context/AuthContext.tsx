@@ -26,7 +26,7 @@ import {
   login as loginService,
   logout as logoutService,
   getUsuarioGuardado,
-} from '../services/auth.service'
+} from '../api/auth.api'
 import type { UsuarioAuth } from '../types/auth.types'
 
 /**

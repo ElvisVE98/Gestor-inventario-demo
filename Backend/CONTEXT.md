@@ -78,51 +78,8 @@ ti-inventario-api/
 │           ├── asignacion.routes.ts
 │           └── dashboard.routes.ts
 │
-├── Frontend/
-│   └── src/
-│       ├── App.tsx                       # Árbol de rutas con React Router
-│       ├── main.tsx                      # Punto de entrada Vite
-│       ├── context/
-│       │   └── AuthContext.tsx           # Estado global de autenticación
-│       ├── types/
-│       │   ├── auth.types.ts             # UsuarioAuth, LoginRespuesta, UsuarioAdmin
-│       │   ├── activo.types.ts           # Activo, EstadoActivo (incluye prestamo/robo), CategoriaActivo
-│       │   ├── persona.types.ts          # Persona, PersonaConActivos, DTOs
-│       │   ├── asignacion.types.ts       # AsignacionConDetalle, CrearAsignacionDTO
-│       │   ├── dashboard.types.ts        # DashboardKPIs
-│       │   └── api.types.ts              # ApiResponse<T>
-│       ├── services/
-│       │   ├── auth.service.ts           # login, logout, cambiarPassword, recuperarPassword, getUsuarios, crearUsuario, eliminarUsuario
-│       │   ├── activo.service.ts         # getActivos, getActivosConBaja, getActivoById, crearActivo, editarActivo, darDeBaja
-│       │   ├── persona.service.ts        # getPersonas, getPersonasTodas, getPersonaById, crearPersona, editarPersona, desactivarPersona
-│       │   ├── asignacion.service.ts     # getAsignaciones, crearAsignacion, devolverActivo
-│       │   ├── dashboard.service.ts      # obtenerDashboard
-│       │   └── api.ts                    # fetchConAuth: helper para fetch con token JWT
-│       ├── components/
-│       │   ├── Layout.tsx                # Shell con Sidebar + Outlet
-│       │   ├── Sidebar.tsx               # Nav: Dashboard/Personas son links directos; Activos/Configuración son botones toggle con sub-links colapsables
-│       │   ├── ProtectedRoute.tsx        # Redirige a /login si no hay sesión
-│       │   ├── Modal.tsx                 # Base modal reutilizable
-│       │   ├── ModalConfirmar.tsx        # Modal de confirmación genérico
-│       │   ├── ModalCrearActivo.tsx
-│       │   ├── ModalEditarActivo.tsx
-│       │   ├── ModalCrearPersona.tsx
-│       │   ├── ModalEditarPersona.tsx
-│       │   ├── ModalAsignarActivo.tsx
-│       │   ├── ModalDevolverActivo.tsx
-│       │   └── KpiCard.tsx
-│       └── pages/
-│           ├── LoginPage.tsx             # Login + modo "olvidé mi contraseña"
-│           ├── DashboardPage.tsx         # KPIs del sistema
-│           ├── PersonasPage.tsx          # Tabla con filtros sucursal/centro_costo/estado + toggle inactivos
-│           ├── PersonaDetallePage.tsx    # Detalle con activos asignados
-│           ├── ActivosPage.tsx           # Tabla con toggle "ver dados de baja" + links a categorías
-│           ├── ActivoDetallePage.tsx     # Detalle con historial de asignaciones
-│           ├── CategoriaActivosPage.tsx  # Sub-páginas /activos/categoria/:categoria
-│           ├── PerfilPage.tsx            # Ver email + cambiar contraseña
-│           └── UsuariosPage.tsx          # CRUD de usuarios del sistema (Supabase Auth)
-│
-└── CONTEXT.md                            # Este archivo
+├── Frontend/                             # Ver Frontend/CONTEXT.md para detalles de arquitectura frontend
+└── README.md                             # Documentación global del proyecto
 ```
 
 **Patrón de capas (siempre de arriba hacia abajo):**

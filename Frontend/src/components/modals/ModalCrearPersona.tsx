@@ -10,8 +10,8 @@
 import { useState } from 'react'
 import type { ChangeEvent } from 'react'
 import Modal from './Modal'
-import { crearPersona } from '../services/persona.service'
-import type { Persona, CrearPersonaDTO } from '../types/persona.types'
+import { crearPersona } from '../../api/persona.api'
+import type { Persona, CrearPersonaDTO } from '../../types/persona.types'
 
 interface Props {
   onClose: () => void                  // Cierra el modal (X o Cancelar)

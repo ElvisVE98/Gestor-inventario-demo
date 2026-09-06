@@ -13,11 +13,11 @@
 
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { getActivos, getActivosConBaja, darDeBaja } from '../services/activo.service'
+import { getActivos, getActivosConBaja, darDeBaja } from '../api/activo.api'
 import type { Activo, CategoriaActivo, EstadoActivo } from '../types/activo.types'
-import ModalCrearActivo  from '../components/ModalCrearActivo'
-import ModalEditarActivo from '../components/ModalEditarActivo'
-import ModalConfirmar    from '../components/ModalConfirmar'
+import ModalCrearActivo  from '../components/modals/ModalCrearActivo'
+import ModalEditarActivo from '../components/modals/ModalEditarActivo'
+import ModalConfirmar    from '../components/modals/ModalConfirmar'
 import { exportarCsv }  from '../utils/exportarCsv'
 
 // ── Badges ────────────────────────────────────────────────────────────────────

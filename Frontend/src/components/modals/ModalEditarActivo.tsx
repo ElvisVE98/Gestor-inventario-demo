@@ -14,8 +14,8 @@
 import { useState } from 'react'
 import type { ChangeEvent } from 'react'
 import Modal from './Modal'
-import { editarActivo } from '../services/activo.service'
-import type { Activo, EditarActivoDTO } from '../types/activo.types'
+import { editarActivo } from '../../api/activo.api'
+import type { Activo, EditarActivoDTO } from '../../types/activo.types'
 
 interface Props {
   activo: Activo

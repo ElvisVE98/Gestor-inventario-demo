@@ -13,12 +13,12 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { getActivoById } from '../services/activo.service'
-import { getAsignacionesPorActivo } from '../services/asignacion.service'
+import { getActivoById } from '../api/activo.api'
+import { getAsignacionesPorActivo } from '../api/asignacion.api'
 import type { ActivoDetalle } from '../types/activo.types'
 import type { AsignacionConDetalle } from '../types/asignacion.types'
-import ModalAsignarActivo  from '../components/ModalAsignarActivo'
-import ModalDevolverActivo from '../components/ModalDevolverActivo'
+import ModalAsignarActivo  from '../components/modals/ModalAsignarActivo'
+import ModalDevolverActivo from '../components/modals/ModalDevolverActivo'
 
 // ── Helpers de formato ────────────────────────────────────────────────────────
 

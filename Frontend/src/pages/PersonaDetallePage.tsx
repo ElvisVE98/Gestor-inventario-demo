@@ -13,10 +13,10 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { getPersonaById } from '../services/persona.service'
+import { getPersonaById } from '../api/persona.api'
 import type { PersonaConActivos, ActivoAsignado } from '../types/persona.types'
-import ModalAsignarActivo  from '../components/ModalAsignarActivo'
-import ModalDevolverActivo from '../components/ModalDevolverActivo'
+import ModalAsignarActivo  from '../components/modals/ModalAsignarActivo'
+import ModalDevolverActivo from '../components/modals/ModalDevolverActivo'
 
 /**
  * Convierte un timestamp ISO 8601 a fecha legible en formato chileno.

@@ -14,11 +14,11 @@
 
 import { useEffect, useState, Fragment } from 'react'
 import { Link } from 'react-router-dom'
-import { getPersonasTodas, desactivarPersona, getPersonaById } from '../services/persona.service'
+import { getPersonasTodas, desactivarPersona, getPersonaById } from '../api/persona.api'
 import type { Persona, ActivoAsignado } from '../types/persona.types'
-import ModalCrearPersona  from '../components/ModalCrearPersona'
-import ModalEditarPersona from '../components/ModalEditarPersona'
-import ModalConfirmar     from '../components/ModalConfirmar'
+import ModalCrearPersona  from '../components/modals/ModalCrearPersona'
+import ModalEditarPersona from '../components/modals/ModalEditarPersona'
+import ModalConfirmar     from '../components/modals/ModalConfirmar'
 import { exportarCsv }   from '../utils/exportarCsv'
 
 /**

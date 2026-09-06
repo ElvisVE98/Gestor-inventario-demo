@@ -11,7 +11,7 @@
 
 import { useState } from 'react'
 import Modal from './Modal'
-import { devolverActivo } from '../services/asignacion.service'
+import { devolverActivo } from '../../api/asignacion.api'
 
 interface Props {
   asignacionId: string     // UUID de la asignación activa a cerrar

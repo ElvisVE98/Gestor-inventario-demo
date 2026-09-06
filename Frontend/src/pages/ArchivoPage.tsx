@@ -13,7 +13,7 @@
  */
 
 import { useEffect, useState } from 'react'
-import { getPersonasInactivas, getActivosDadosDeBaja } from '../services/archivo.service'
+import { getPersonasInactivas, getActivosDadosDeBaja } from '../api/archivo.api'
 import type { Persona } from '../types/persona.types'
 import type { Activo }  from '../types/activo.types'
 import { exportarCsv }  from '../utils/exportarCsv'

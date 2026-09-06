@@ -16,7 +16,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, LabelList,
 } from 'recharts'
 import type { DashboardKPIs } from '../types/dashboard.types'
-import { obtenerDashboard } from '../services/dashboard.service'
+import { obtenerDashboard } from '../api/dashboard.api'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

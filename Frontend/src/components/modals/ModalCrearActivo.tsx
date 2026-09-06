@@ -16,8 +16,8 @@
 import { useState } from 'react'
 import type { ChangeEvent } from 'react'
 import Modal from './Modal'
-import { crearActivo } from '../services/activo.service'
-import type { Activo, CategoriaActivo, CrearActivoDTO } from '../types/activo.types'
+import { crearActivo } from '../../api/activo.api'
+import type { Activo, CategoriaActivo, CrearActivoDTO } from '../../types/activo.types'
 
 interface Props {
   onClose: () => void

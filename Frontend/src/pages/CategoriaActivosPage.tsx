@@ -17,7 +17,7 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
-import { getActivos } from '../services/activo.service'
+import { getActivos } from '../api/activo.api'
 import type { Activo, CategoriaActivo } from '../types/activo.types'
 import { exportarCsv } from '../utils/exportarCsv'
 

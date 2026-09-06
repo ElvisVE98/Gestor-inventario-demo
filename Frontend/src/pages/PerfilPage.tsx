@@ -16,7 +16,7 @@
 
 import { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { cambiarPassword } from '../services/auth.service'
+import { cambiarPassword } from '../api/auth.api'
 
 export default function PerfilPage() {
   const { usuario } = useAuth()

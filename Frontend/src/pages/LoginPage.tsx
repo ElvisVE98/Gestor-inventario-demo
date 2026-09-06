@@ -15,7 +15,7 @@
 import { useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { recuperarPassword } from '../services/auth.service'
+import { recuperarPassword } from '../api/auth.api'
 
 /** Modo de la pantalla: formulario de login o formulario de recuperación. */
 type Modo = 'login' | 'recuperar'
